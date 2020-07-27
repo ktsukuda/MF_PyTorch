@@ -4,7 +4,7 @@ from torch import nn
 
 class MF(nn.Module):
 
-    def __init__(self, n_user, n_item, latent_dim, lr, l2_reg):
+    def __init__(self, n_user, n_item, latent_dim):
         super().__init__()
 
         self.user_emb = nn.Embedding(num_embeddings=n_user, embedding_dim=latent_dim)
