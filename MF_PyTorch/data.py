@@ -1,3 +1,4 @@
+import torch
 import random
 import pandas as pd
 import numpy as np
@@ -55,3 +56,19 @@ class DataSplitter():
         validation = self.ratings[self.ratings['timestamp_rank'] == 2]
         train = self.ratings[self.ratings['timestamp_rank'] > 2]
         return train[['new_uid', 'new_mid', 'rating']], validation[['new_uid', 'new_mid', 'rating']], test[['new_uid', 'new_mid', 'rating']]
+
+    def make_evaluation_data(self, type):
+        if type == 'test':
+            ratings = pd.merge(self.test_ratings, self.negatives[['new_uid', 'negative_samples_for_test']], on='new_uid')
+            ratings = ratings.rename(columns={'negative_samples_for_test': 'negative_samples'})
+        elif type == 'validation':
+            ratings = pd.merge(self.validation_ratings, self.negatives[['new_uid', 'negative_samples_for_validation']], on='new_uid')
+            ratings = ratings.rename(columns={'negative_samples_for_validation': 'negative_samples'})
+        users, items, negative_users, negative_items = [], [], [], []
+        for row in ratings.itertuples():
+            users.append(int(row.new_uid))
+            items.append(int(row.new_mid))
+            for i in range(len(row.negative_samples)):
+                negative_users.append(int(row.new_uid))
+                negative_items.append(int(row.negative_samples[i]))
+        return [torch.LongTensor(users), torch.LongTensor(items), torch.LongTensor(negative_users), torch.LongTensor(negative_items)]
