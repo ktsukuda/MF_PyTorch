@@ -3,6 +3,21 @@ import random
 import pandas as pd
 import numpy as np
 from copy import deepcopy
+from torch.utils.data import DataLoader, Dataset
+
+
+class UserItemRatingDataset(Dataset):
+
+    def __init__(self, user_tensor, item_tensor, target_tensor):
+        self.user_tensor = user_tensor
+        self.item_tensor = item_tensor
+        self.target_tensor = target_tensor
+
+    def __getitem__(self, index):
+        return self.user_tensor[index], self.item_tensor[index], self.target_tensor[index]
+
+    def __len__(self):
+        return self.user_tensor.size(0)
 
 
 class DataSplitter():
@@ -80,3 +95,20 @@ class DataSplitter():
     @property
     def n_item(self):
         return len(self.item_pool)
+
+    def make_train_loader(self, n_negative, batch_size):
+        users, items, ratings = [], [], []
+        train_ratings = pd.merge(self.test_ratings, self.negatives[['new_uid', 'negative_items']], on='new_uid')
+        train_ratings['negatives'] = train_ratings['negative_items'].apply(lambda x: random.sample(x, n_negative))
+        for row in train_ratings.itertuples():
+            users.append(int(row.new_uid))
+            items.append(int(row.new_mid))
+            ratings.append(float(row.rating))
+            for i in range(n_negative):
+                users.append(int(row.new_uid))
+                items.append(int(row.negatives[i]))
+                ratings.append(float(0))
+        dataset = UserItemRatingDataset(user_tensor=torch.LongTensor(users),
+                                        item_tensor=torch.LongTensor(items),
+                                        target_tensor=torch.FloatTensor(ratings))
+        return DataLoader(dataset, batch_size=batch_size, num_workers=8, shuffle=True)
