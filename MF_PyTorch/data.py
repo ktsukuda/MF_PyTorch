@@ -72,3 +72,11 @@ class DataSplitter():
                 negative_users.append(int(row.new_uid))
                 negative_items.append(int(row.negative_samples[i]))
         return [torch.LongTensor(users), torch.LongTensor(items), torch.LongTensor(negative_users), torch.LongTensor(negative_items)]
+
+    @property
+    def n_user(self):
+        return len(self.user_pool)
+
+    @property
+    def n_item(self):
+        return len(self.item_pool)
