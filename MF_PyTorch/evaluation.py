@@ -71,6 +71,6 @@ class Metrics():
 
     def compute_ndcg(self):
         top_k = self._subjects[self._subjects['rank']<=self._top_k]
-        pos_in_top_k = top_k[top_k['pos_item'] == top_k['item']]
+        pos_in_top_k = top_k[top_k['pos_item'] == top_k['item']].copy()
         pos_in_top_k['ndcg'] = pos_in_top_k['rank'].apply(lambda x: math.log(2) / math.log(1 + x))
         return pos_in_top_k['ndcg'].sum() / self._subjects['user'].nunique()
