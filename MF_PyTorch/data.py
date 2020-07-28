@@ -98,7 +98,7 @@ class DataSplitter():
 
     def make_train_loader(self, n_negative, batch_size):
         users, items, ratings = [], [], []
-        train_ratings = pd.merge(self.test_ratings, self.negatives[['new_uid', 'negative_items']], on='new_uid')
+        train_ratings = pd.merge(self.train_ratings, self.negatives[['new_uid', 'negative_items']], on='new_uid')
         train_ratings['negatives'] = train_ratings['negative_items'].apply(lambda x: random.sample(x, n_negative))
         for row in train_ratings.itertuples():
             users.append(int(row.new_uid))
