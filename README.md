@@ -7,24 +7,13 @@ Matrix Factorization with PyTorch.
 - Python: 3.6
 - PyTorch: 1.5.1
 - CUDA: 10.1
-- Python library: see [conda_requirements.txt](https://github.com/ktsukuda/MF_PyTorch/blob/master/conda_requirements.txt)
+- Ubuntu: 18.04
 
 ## Dataset
 
 [The Movielens 1M Dataset](http://grouplens.org/datasets/movielens/1m/) is used. The rating data is included in [data/ml-1m](https://github.com/ktsukuda/MF_PyTorch/tree/master/data/ml-1m).
 
-## Getting Started
-
-1. Clone the repository and install requirements in a specific conda environment
-
-```bash
-$ git clone https://github.com/ktsukuda/MF_PyTorch.git
-$ cd MF_PyTorch
-$ conda create --name <env> --file conda_requirements.txt
-$ conda activate <env>
-```
-
-2. Run model with build-in dataset
+## Run the Codes
 
 ```bash
 $ python MF_PyTorch/main.py
