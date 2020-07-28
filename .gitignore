@@ -1,3 +1,5 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+data/train_result/

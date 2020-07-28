@@ -1,4 +1,7 @@
+import os
+import json
 import tqdm
+import torch
 import configparser
 from torch import nn, optim
 
@@ -30,6 +33,15 @@ def train(model, opt, criterion, data_splitter, validation_data, config):
     return epoch_data
 
 
+def save_train_result(model, epoch_data, batch_size, lr, latent_dim, l2_reg, config):
+    result_dir = "data/train_result/batch_size_{}-lr_{}-latent_dim_{}-l2_reg_{}-epoch_{}-n_negative_{}-top_k_{}".format(
+        batch_size, lr, latent_dim, l2_reg, config['MODEL']['epoch'], config['MODEL']['n_negative'], config['EVALUATION']['top_k'])
+    os.makedirs(result_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(result_dir, 'model.pth'))
+    with open(os.path.join(result_dir, 'epoch_data.json'), 'w') as f:
+        json.dump(epoch_data, f, indent=4)
+
+
 def main():
     config = configparser.ConfigParser()
     config.read('MF_PyTorch/config.ini')
@@ -49,6 +61,7 @@ def main():
                     opt = optim.Adam(model.parameters(), lr=lr, weight_decay=l2_reg)
                     criterion = nn.BCELoss()
                     epoch_data = train(model, opt, criterion, data_splitter, validation_data, config)
+                    save_train_result(model, epoch_data, batch_size, lr, latent_dim, l2_reg, config)
 
 
 if __name__ == "__main__":
