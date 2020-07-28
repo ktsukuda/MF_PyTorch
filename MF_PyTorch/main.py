@@ -25,13 +25,13 @@ def main():
         train_loader = data_splitter.make_train_loader(config.getint('MODEL', 'n_negative'), 1024)
         total_loss = 0
         for batch in tqdm.tqdm(train_loader):
-            users, items, ratings = batch[0], batch[1], batch[2]
+            users, items, ratings = batch[0], batch[1], batch[2].float()
             users = users.to('cuda:0')
             items = items.to('cuda:0')
             ratings = ratings.to('cuda:0')
             opt.zero_grad()
             pred = model(users, items)
-            loss = criterion(pred, ratings)
+            loss = criterion(pred.view(-1), ratings)
             loss.backward()
             opt.step()
             total_loss += loss.item()
