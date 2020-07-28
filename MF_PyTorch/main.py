@@ -7,20 +7,7 @@ import evaluation
 from MF import MF
 
 
-def main():
-    config = configparser.ConfigParser()
-    config.read('MF_PyTorch/config.ini')
-
-    data_splitter = data.DataSplitter()
-    validation_data = data_splitter.make_evaluation_data('validation')
-
-    model = MF(data_splitter.n_user, data_splitter.n_item, 8)
-    print(model)
-    model.to('cuda:0')
-
-    opt = optim.Adam(model.parameters(), lr=0.001, weight_decay=0)
-    criterion = nn.BCELoss()
-
+def train(model, opt, criterion, data_splitter, validation_data, config):
     epoch_data = []
     for epoch in range(config.getint('MODEL', 'epoch')):
         model.train()
@@ -40,6 +27,28 @@ def main():
         hit_ratio, ndcg = evaluation.evaluate(model, validation_data, config.getint('EVALUATION', 'top_k'))
         epoch_data.append({'epoch': epoch, 'loss': total_loss, 'HR': hit_ratio, 'NDCG': ndcg})
         print('[Epoch {}] Loss = {:.2f}, HR = {:.4f}, NDCG = {:.4f}'.format(epoch, total_loss, hit_ratio, ndcg))
+    return epoch_data
+
+
+def main():
+    config = configparser.ConfigParser()
+    config.read('MF_PyTorch/config.ini')
+
+    data_splitter = data.DataSplitter()
+    validation_data = data_splitter.make_evaluation_data('validation')
+
+    for batch_size in map(int, config['MODEL']['batch_size'].split()):
+        for lr in map(float, config['MODEL']['lr'].split()):
+            for latent_dim in map(int, config['MODEL']['latent_dim'].split()):
+                for l2_reg in map(float, config['MODEL']['l2_reg'].split()):
+                    print('batch_size = {}, lr = {}, latent_dim = {}, l2_reg = {}'.format(
+                        batch_size, lr, latent_dim, l2_reg))
+                    model = MF(data_splitter.n_user, data_splitter.n_item, latent_dim)
+                    model.to('cuda:0')
+
+                    opt = optim.Adam(model.parameters(), lr=lr, weight_decay=l2_reg)
+                    criterion = nn.BCELoss()
+                    epoch_data = train(model, opt, criterion, data_splitter, validation_data, config)
 
 
 if __name__ == "__main__":
