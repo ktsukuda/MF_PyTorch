@@ -25,7 +25,7 @@ For each user, the latest and the second latest rating are used as test and vali
 
 Although the original ratings range 1 to 5, all of them are converted to 1. That is, we use the binalized data where movies rated by users have score 1 while those not rated by users have score 0.
 
-By running the code, hyperparameters are automatically tuned. After the training process, the best hyperparameters and the best nDCG computed by using the test data are displayed.
+By running the code, hyperparameters are automatically tuned. After the training process, the best hyperparameters and HR/nDCG computed by using the test data are displayed.
 
 Given a specific combination of hyperparameters, the corresponding training results are saved in `data/train_result/<hyperparameter combination>` (e.g., data/train_result/batch_size_512-lr_0.005-latent_dim_8-l2_reg_1e-07-epoch_3-n_negative_4-top_k_10). In the directory, a model file (`model.pth`) and a json file (`epoch_data.json`) that describes information for each epoch are generated. The json file can be described as follows (epoch=3).
 
