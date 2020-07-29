@@ -12,6 +12,8 @@ from MF import MF
 
 def train(model, opt, criterion, data_splitter, validation_data, config):
     epoch_data = []
+    best_model_state_dict = None
+    best_ndcg = 0
     for epoch in range(config.getint('MODEL', 'epoch')):
         model.train()
         train_loader = data_splitter.make_train_loader(config.getint('MODEL', 'n_negative'), 1024)
@@ -29,15 +31,17 @@ def train(model, opt, criterion, data_splitter, validation_data, config):
             total_loss += loss.item()
         hit_ratio, ndcg = evaluation.evaluate(model, validation_data, config.getint('EVALUATION', 'top_k'))
         epoch_data.append({'epoch': epoch, 'loss': total_loss, 'HR': hit_ratio, 'NDCG': ndcg})
+        if ndcg > best_ndcg:
+            best_model_state_dict = model.state_dict()
         print('[Epoch {}] Loss = {:.2f}, HR = {:.4f}, NDCG = {:.4f}'.format(epoch, total_loss, hit_ratio, ndcg))
-    return epoch_data
+    return epoch_data, best_model_state_dict
 
 
-def save_train_result(model, epoch_data, batch_size, lr, latent_dim, l2_reg, config):
+def save_train_result(best_model_state_dict, epoch_data, batch_size, lr, latent_dim, l2_reg, config):
     result_dir = "data/train_result/batch_size_{}-lr_{}-latent_dim_{}-l2_reg_{}-epoch_{}-n_negative_{}-top_k_{}".format(
         batch_size, lr, latent_dim, l2_reg, config['MODEL']['epoch'], config['MODEL']['n_negative'], config['EVALUATION']['top_k'])
     os.makedirs(result_dir, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(result_dir, 'model.pth'))
+    torch.save(best_model_state_dict, os.path.join(result_dir, 'model.pth'))
     with open(os.path.join(result_dir, 'epoch_data.json'), 'w') as f:
         json.dump(epoch_data, f, indent=4)
 
@@ -53,7 +57,7 @@ def find_best_model(config, n_user, n_item):
                     result_dir = "data/train_result/batch_size_{}-lr_{}-latent_dim_{}-l2_reg_{}-epoch_{}-n_negative_{}-top_k_{}".format(
                         batch_size, lr, latent_dim, l2_reg, config['MODEL']['epoch'], config['MODEL']['n_negative'], config['EVALUATION']['top_k'])
                     with open(os.path.join(result_dir, 'epoch_data.json')) as f:
-                        ndcg = json.load(f)[-1]['NDCG']
+                        ndcg = max([d['NDCG'] for d in json.load(f)])
                         if ndcg > best_ndcg:
                             best_ndcg = ndcg
                             best_params = {
@@ -84,8 +88,8 @@ def main():
 
                     opt = optim.Adam(model.parameters(), lr=lr, weight_decay=l2_reg)
                     criterion = nn.BCELoss()
-                    epoch_data = train(model, opt, criterion, data_splitter, validation_data, config)
-                    save_train_result(model, epoch_data, batch_size, lr, latent_dim, l2_reg, config)
+                    epoch_data, best_model_state_dict = train(model, opt, criterion, data_splitter, validation_data, config)
+                    save_train_result(best_model_state_dict, epoch_data, batch_size, lr, latent_dim, l2_reg, config)
 
     best_model, best_params = find_best_model(config, data_splitter.n_user, data_splitter.n_item)
     hit_ratio, ndcg = evaluation.evaluate(best_model, test_data, config.getint('EVALUATION', 'top_k'))
